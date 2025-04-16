@@ -1,4 +1,4 @@
-# Vastgoedzoeker Webtool – met scraping voor Immoweb, ERA & Dewaele
+# Vastgoedzoeker Webtool – geüpdatet scraping voor Immoweb, ERA & Dewaele
 
 import streamlit as st
 import pandas as pd
@@ -6,7 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 
-# Streamlit configuratie (moet als eerste komen)
+# Streamlit configuratie
 st.set_page_config(page_title="Vastgoedzoeker", layout="wide")
 
 # Zoekcriteria
@@ -17,20 +17,20 @@ POSTCODES = ["1860", "1861", "1785", "1730", "1780"]
 # ---------------------- IMMOWEB ----------------------
 def scrape_immoweb():
     results = []
-    base_url = "https://www.immoweb.be/nl/zoeken/huis/te-koop"
+    base_url = "https://www.immoweb.be/nl/search/house/for-sale"
+    headers = {"User-Agent": "Mozilla/5.0"}
     for postcode in POSTCODES:
         url = f"{base_url}?countries=BE&postalCode={postcode}&minBedroomCount={MIN_SLAAPKAMERS}&maxPrice={MAX_PRIJS}"
-        headers = {"User-Agent": "Mozilla/5.0"}
         response = requests.get(url, headers=headers)
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        for listing in soup.select('[class*="card--result"]'):
+        listings = soup.find_all("a", class_="card__title-link")
+        for listing in listings:
             try:
-                adres = listing.select_one(".card__title span").get_text(strip=True)
-                prijs = listing.select_one(".sr-only").get_text(strip=True)
-                link_tag = listing.find("a", href=True)
-                link = "https://www.immoweb.be" + link_tag['href'] if link_tag else ""
-                tuin = "Ja" if "Tuin" in listing.text else "Onbekend"
+                adres = listing.get_text(strip=True)
+                link = "https://www.immoweb.be" + listing['href']
+                prijs = "Onbekend"
+                tuin = "Onbekend"
                 slaapkamers = MIN_SLAAPKAMERS
                 results.append({
                     "Datum": datetime.today().strftime('%Y-%m-%d'),
@@ -59,18 +59,17 @@ def scrape_era():
             prijs = listing.select_one(".property-price").get_text(strip=True)
             link_tag = listing.find("a", href=True)
             link = "https://www.era.be" + link_tag['href'] if link_tag else ""
-            tuin = "Ja" if "tuin" in listing.text.lower() else "Onbekend"
+            tuin = "Onbekend"
             slaapkamers = MIN_SLAAPKAMERS
-            if any(pc in adres for pc in POSTCODES):
-                results.append({
-                    "Datum": datetime.today().strftime('%Y-%m-%d'),
-                    "Website": "ERA",
-                    "Adres": adres,
-                    "Prijs": prijs,
-                    "Slaapkamers": slaapkamers,
-                    "Tuin": tuin,
-                    "Link": link
-                })
+            results.append({
+                "Datum": datetime.today().strftime('%Y-%m-%d'),
+                "Website": "ERA",
+                "Adres": adres,
+                "Prijs": prijs,
+                "Slaapkamers": slaapkamers,
+                "Tuin": tuin,
+                "Link": link
+            })
         except:
             continue
     return results
@@ -89,18 +88,17 @@ def scrape_dewaele():
             prijs = listing.select_one(".property-tile__price").get_text(strip=True)
             link_tag = listing.find("a", href=True)
             link = "https://www.dewaele.com" + link_tag['href'] if link_tag else ""
-            tuin = "Ja" if "tuin" in listing.text.lower() else "Onbekend"
+            tuin = "Onbekend"
             slaapkamers = MIN_SLAAPKAMERS
-            if any(pc in adres for pc in POSTCODES):
-                results.append({
-                    "Datum": datetime.today().strftime('%Y-%m-%d'),
-                    "Website": "Dewaele",
-                    "Adres": adres,
-                    "Prijs": prijs,
-                    "Slaapkamers": slaapkamers,
-                    "Tuin": tuin,
-                    "Link": link
-                })
+            results.append({
+                "Datum": datetime.today().strftime('%Y-%m-%d'),
+                "Website": "Dewaele",
+                "Adres": adres,
+                "Prijs": prijs,
+                "Slaapkamers": slaapkamers,
+                "Tuin": tuin,
+                "Link": link
+            })
         except:
             continue
     return results
