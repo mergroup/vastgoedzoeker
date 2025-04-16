@@ -6,6 +6,9 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 
+# Streamlit configuratie (moet als eerste komen)
+st.set_page_config(page_title="Vastgoedzoeker", layout="wide")
+
 # Zoekcriteria
 MAX_PRIJS = 750000
 MIN_SLAAPKAMERS = 3
@@ -108,7 +111,6 @@ with st.spinner("Zoekertjes aan het ophalen van Immoweb, ERA & Dewaele..."):
     df = pd.DataFrame(data)
 
 # ---------------------- STREAMLIT UI ----------------------
-st.set_page_config(page_title="Vastgoedzoeker", layout="wide")
 st.title("🏡 Nieuwe huizen in jouw regio")
 st.markdown("Bekijk hier dagelijks nieuwe huizen in jouw regio met jouw criteria:")
 
@@ -119,4 +121,3 @@ if not df.empty:
         st.markdown(f"[{row['Adres']}]({row['Link']}) - {row['Prijs']} - {row['Slaapkamers']} slk - Tuin: {row['Tuin']} ({row['Website']})")
 else:
     st.info("Geen resultaten gevonden voor vandaag met de opgegeven criteria.")
-
