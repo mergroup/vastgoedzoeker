@@ -1,4 +1,4 @@
-# Vastgoedzoeker Webtool – geüpdatet scraping voor Immoweb, ERA & Dewaele
+# Vastgoedzoeker Webtool – debug + verbeterde scraping ERA
 
 import streamlit as st
 import pandas as pd
@@ -17,24 +17,29 @@ POSTCODES = ["1860", "1861", "1785", "1730", "1780"]
 # ---------------------- IMMOWEB ----------------------
 def scrape_immoweb():
     results = []
-    base_url = "https://www.immoweb.be/nl/search/house/for-sale"
+    # Tijdelijk uitschakelen tot JS scraping werkt
+    return results
+
+# ---------------------- ERA (met filters via zoek-URL) ----------------------
+def scrape_era():
+    results = []
     headers = {"User-Agent": "Mozilla/5.0"}
     for postcode in POSTCODES:
-        url = f"{base_url}?countries=BE&postalCode={postcode}&minBedroomCount={MIN_SLAAPKAMERS}&maxPrice={MAX_PRIJS}"
+        url = f"https://www.era.be/nl/te-koop?page=1&search={postcode}"
         response = requests.get(url, headers=headers)
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        listings = soup.find_all("a", class_="card__title-link")
-        for listing in listings:
+        for listing in soup.select(".property-item"):
             try:
-                adres = listing.get_text(strip=True)
-                link = "https://www.immoweb.be" + listing['href']
-                prijs = "Onbekend"
+                adres = listing.select_one(".property-title").get_text(strip=True)
+                prijs = listing.select_one(".property-price").get_text(strip=True)
+                link_tag = listing.find("a", href=True)
+                link = "https://www.era.be" + link_tag['href'] if link_tag else ""
                 tuin = "Onbekend"
                 slaapkamers = MIN_SLAAPKAMERS
                 results.append({
                     "Datum": datetime.today().strftime('%Y-%m-%d'),
-                    "Website": "Immoweb",
+                    "Website": "ERA",
                     "Adres": adres,
                     "Prijs": prijs,
                     "Slaapkamers": slaapkamers,
@@ -43,35 +48,6 @@ def scrape_immoweb():
                 })
             except:
                 continue
-    return results
-
-# ---------------------- ERA ----------------------
-def scrape_era():
-    results = []
-    base_url = "https://www.era.be/nl/te-koop"
-    headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(base_url, headers=headers)
-    soup = BeautifulSoup(response.text, 'html.parser')
-
-    for listing in soup.select(".property-item"):
-        try:
-            adres = listing.select_one(".property-title").get_text(strip=True)
-            prijs = listing.select_one(".property-price").get_text(strip=True)
-            link_tag = listing.find("a", href=True)
-            link = "https://www.era.be" + link_tag['href'] if link_tag else ""
-            tuin = "Onbekend"
-            slaapkamers = MIN_SLAAPKAMERS
-            results.append({
-                "Datum": datetime.today().strftime('%Y-%m-%d'),
-                "Website": "ERA",
-                "Adres": adres,
-                "Prijs": prijs,
-                "Slaapkamers": slaapkamers,
-                "Tuin": tuin,
-                "Link": link
-            })
-        except:
-            continue
     return results
 
 # ---------------------- DEWAELE ----------------------
@@ -104,13 +80,16 @@ def scrape_dewaele():
     return results
 
 # ---------------------- GEGEVENS OPHALEN ----------------------
-with st.spinner("Zoekertjes aan het ophalen van Immoweb, ERA & Dewaele..."):
-    data = scrape_immoweb() + scrape_era() + scrape_dewaele()
+with st.spinner("Zoekertjes aan het ophalen van ERA & Dewaele..."):
+    data = scrape_era() + scrape_dewaele()
     df = pd.DataFrame(data)
 
 # ---------------------- STREAMLIT UI ----------------------
 st.title("🏡 Nieuwe huizen in jouw regio")
 st.markdown("Bekijk hier dagelijks nieuwe huizen in jouw regio met jouw criteria:")
+
+st.write("Aantal resultaten gevonden:", len(df))
+st.write(df)
 
 # ---------------------- TABEL TONEN ----------------------
 if not df.empty:
