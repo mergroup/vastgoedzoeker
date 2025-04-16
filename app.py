@@ -119,3 +119,4 @@ if not df.empty:
         st.markdown(f"[{row['Adres']}]({row['Link']}) - {row['Prijs']} - {row['Slaapkamers']} slk - Tuin: {row['Tuin']} ({row['Website']})")
 else:
     st.info("Geen resultaten gevonden voor vandaag met de opgegeven criteria.")
+
