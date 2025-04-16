@@ -7,8 +7,8 @@ from datetime import datetime
 
 st.set_page_config(page_title="Vastgoedzoeker", layout="wide")
 
-# ✅ API endpoint van Apify dataset (live!)
-APIFY_DATASET_URL = "https://api.apify.com/v2/datasets/8uWYDZ9AbBP5gWKnq/items?clean=true"
+# ✅ Werkende dataset-URL van Apify
+APIFY_DATASET_URL = "https://api.apify.com/v2/datasets/bFGOdtPL7X95FoyW9/items?clean=true"
 
 # ---------------------- DATA OPHALEN ----------------------
 def fetch_apify_results():
